@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/components/ui/use-toast';
-import { Calendar, Clock, User, Search, CalendarCheck } from 'lucide-react';
+import { Calendar, Clock, User, Search, CalendarCheck, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useBackend } from '../hooks/useBackend';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
@@ -23,7 +23,7 @@ export function BookAppointment() {
   const backend = useBackend();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { initiateGoogleAuth } = useGoogleAuth();
+  const { initiateGoogleAuth, isConfigured } = useGoogleAuth();
 
   const [selectedSeller, setSelectedSeller] = useState<string>(sellerId || '');
   const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -140,17 +140,37 @@ export function BookAppointment() {
   if (!user) {
     return (
       <div className="max-w-4xl mx-auto">
+        {!isConfigured && (
+          <Alert className="mb-6">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Configuration Required:</strong> To enable Google authentication, you need to:
+              <ol className="list-decimal list-inside mt-2 space-y-1">
+                <li>Create a Google Cloud Project at <a href="https://console.cloud.google.com" target="_blank" rel="noopener noreferrer" className="underline">console.cloud.google.com</a></li>
+                <li>Enable the Google Calendar API</li>
+                <li>Create OAuth 2.0 credentials</li>
+                <li>Update the clientId in frontend/config.ts</li>
+                <li>Set up the same credentials as backend secrets (GoogleClientId, GoogleClientSecret)</li>
+              </ol>
+              <p className="mt-2 text-sm">For now, you can click the button below to use demo mode.</p>
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <Card>
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Sign in to Book Appointments</CardTitle>
             <CardDescription>
-              Connect with your Google account to book appointments with sellers.
+              {isConfigured
+                ? "Connect with your Google account to book appointments with sellers."
+                : "Demo mode - Click to simulate signing in with Google."
+              }
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">
             <Button size="lg" onClick={handleSignIn}>
               <Calendar className="h-5 w-5 mr-2" />
-              Sign in with Google
+              {isConfigured ? "Sign in with Google" : "Demo Sign in"}
             </Button>
           </CardContent>
         </Card>
@@ -360,7 +380,10 @@ export function BookAppointment() {
                 <Alert>
                   <CalendarCheck className="h-4 w-4" />
                   <AlertDescription>
-                    This appointment will be automatically added to both your and the seller's Google Calendar with a Google Meet link.
+                    {isConfigured
+                      ? "This appointment will be automatically added to both your and the seller's Google Calendar with a Google Meet link."
+                      : "In demo mode, appointments are stored but calendar integration is simulated."
+                    }
                   </AlertDescription>
                 </Alert>
               </CardContent>

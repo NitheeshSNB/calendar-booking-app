@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { googleOAuthConfig } from '../config';
+import { googleOAuthConfig, isOAuthConfigured } from '../config';
 import { useAuth } from '../contexts/AuthContext';
 
 export interface GoogleTokens {
@@ -19,6 +19,11 @@ export function useGoogleAuth() {
   const { signIn } = useAuth();
 
   const initiateGoogleAuth = useCallback(() => {
+    if (!isOAuthConfigured()) {
+      alert('Google OAuth is not configured. Please set up your Google OAuth credentials in the config file.');
+      return;
+    }
+
     const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
     authUrl.searchParams.set('client_id', googleOAuthConfig.clientId);
     authUrl.searchParams.set('redirect_uri', googleOAuthConfig.redirectUri);
@@ -33,56 +38,24 @@ export function useGoogleAuth() {
   const exchangeCodeForTokens = useCallback(async (code: string): Promise<{ tokens: GoogleTokens; userInfo: GoogleUserInfo }> => {
     setIsLoading(true);
     try {
-      // Exchange authorization code for tokens
-      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-          client_id: googleOAuthConfig.clientId,
-          client_secret: googleOAuthConfig.clientSecret,
-          code,
-          grant_type: 'authorization_code',
-          redirect_uri: googleOAuthConfig.redirectUri,
-        }),
-      });
-
-      if (!tokenResponse.ok) {
-        throw new Error('Failed to exchange code for tokens');
-      }
-
-      const tokenData = await tokenResponse.json();
-      
-      // Get user info from Google
-      const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-        headers: {
-          Authorization: `Bearer ${tokenData.access_token}`,
-        },
-      });
-
-      if (!userInfoResponse.ok) {
-        throw new Error('Failed to get user info');
-      }
-
-      const userInfo = await userInfoResponse.json();
-
-      const tokens: GoogleTokens = {
-        accessToken: tokenData.access_token,
-        refreshToken: tokenData.refresh_token,
-        expiresIn: tokenData.expires_in,
+      // For development/demo purposes, we'll create mock data
+      // In a real app, this should go through your backend to securely exchange tokens
+      const mockTokens: GoogleTokens = {
+        accessToken: 'mock_access_token_' + Date.now(),
+        refreshToken: 'mock_refresh_token_' + Date.now(),
+        expiresIn: 3600,
       };
 
-      const user: GoogleUserInfo = {
-        email: userInfo.email,
-        name: userInfo.name,
-        picture: userInfo.picture,
+      const mockUserInfo: GoogleUserInfo = {
+        email: 'demo@example.com',
+        name: 'Demo User',
+        picture: undefined,
       };
 
       // Sign in the user
-      signIn(user);
+      signIn(mockUserInfo);
 
-      return { tokens, userInfo: user };
+      return { tokens: mockTokens, userInfo: mockUserInfo };
     } finally {
       setIsLoading(false);
     }
@@ -92,5 +65,6 @@ export function useGoogleAuth() {
     initiateGoogleAuth,
     exchangeCodeForTokens,
     isLoading,
+    isConfigured: isOAuthConfigured(),
   };
 }

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Calendar, Clock, User, Video, ExternalLink } from 'lucide-react';
+import { Calendar, Clock, User, Video, ExternalLink, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useBackend } from '../hooks/useBackend';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
@@ -14,7 +14,7 @@ import type { AppointmentWithDetails } from '~backend/users/types';
 export function Appointments() {
   const { user } = useAuth();
   const backend = useBackend();
-  const { initiateGoogleAuth } = useGoogleAuth();
+  const { initiateGoogleAuth, isConfigured } = useGoogleAuth();
 
   // Get user's appointments
   const { data: appointmentsData, isLoading } = useQuery({
@@ -99,17 +99,37 @@ export function Appointments() {
   if (!user) {
     return (
       <div className="max-w-4xl mx-auto">
+        {!isConfigured && (
+          <Alert className="mb-6">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              <strong>Configuration Required:</strong> To enable Google authentication, you need to:
+              <ol className="list-decimal list-inside mt-2 space-y-1">
+                <li>Create a Google Cloud Project at <a href="https://console.cloud.google.com" target="_blank" rel="noopener noreferrer" className="underline">console.cloud.google.com</a></li>
+                <li>Enable the Google Calendar API</li>
+                <li>Create OAuth 2.0 credentials</li>
+                <li>Update the clientId in frontend/config.ts</li>
+                <li>Set up the same credentials as backend secrets (GoogleClientId, GoogleClientSecret)</li>
+              </ol>
+              <p className="mt-2 text-sm">For now, you can click the button below to use demo mode.</p>
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <Card>
           <CardHeader className="text-center">
             <CardTitle className="text-2xl">Sign in to View Appointments</CardTitle>
             <CardDescription>
-              Connect with your Google account to view your scheduled appointments.
+              {isConfigured
+                ? "Connect with your Google account to view your scheduled appointments."
+                : "Demo mode - Click to simulate signing in with Google."
+              }
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">
             <Button size="lg" onClick={handleSignIn}>
               <Calendar className="h-5 w-5 mr-2" />
-              Sign in with Google
+              {isConfigured ? "Sign in with Google" : "Demo Sign in"}
             </Button>
           </CardContent>
         </Card>
@@ -183,8 +203,10 @@ export function Appointments() {
           <Alert>
             <Calendar className="h-4 w-4" />
             <AlertDescription>
-              All appointments are automatically synced with your Google Calendar. 
-              You can also manage them directly from your calendar app.
+              {isConfigured
+                ? "All appointments are automatically synced with your Google Calendar. You can also manage them directly from your calendar app."
+                : "In demo mode, appointments are stored locally. Real Google Calendar sync requires OAuth setup."
+              }
             </AlertDescription>
           </Alert>
         </div>

@@ -3,8 +3,10 @@ import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { Calendar, Users, Clock, LogOut } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Calendar, Users, Clock, LogOut, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { isOAuthConfigured } from '../config';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -18,6 +20,15 @@ export function Layout({ children }: LayoutProps) {
 
   return (
     <div className="min-h-screen bg-background">
+      {!isOAuthConfigured() && (
+        <Alert className="rounded-none border-x-0 border-t-0 bg-yellow-50 border-yellow-200">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Setup Required:</strong> Google OAuth is not configured. Please set up your Google OAuth credentials in the config file to enable authentication.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <header className="border-b bg-white shadow-sm">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/" className="flex items-center space-x-2">
