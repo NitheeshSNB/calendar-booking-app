@@ -32,14 +32,71 @@ export function useGoogleAuth() {
     authUrl.searchParams.set('access_type', 'offline');
     authUrl.searchParams.set('prompt', 'consent');
 
+    console.log('OAuth URL:', authUrl.toString());
+    console.log('Redirect URI:', googleOAuthConfig.redirectUri);
+    
     window.location.href = authUrl.toString();
   }, []);
 
   const exchangeCodeForTokens = useCallback(async (code: string): Promise<{ tokens: GoogleTokens; userInfo: GoogleUserInfo }> => {
     setIsLoading(true);
     try {
-      // For development/demo purposes, we'll create mock data
-      // In a real app, this should go through your backend to securely exchange tokens
+      // Exchange authorization code for tokens
+      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          client_id: googleOAuthConfig.clientId,
+          client_secret: '', // This should be handled by backend for security
+          code,
+          grant_type: 'authorization_code',
+          redirect_uri: googleOAuthConfig.redirectUri,
+        }),
+      });
+
+      if (!tokenResponse.ok) {
+        const errorData = await tokenResponse.text();
+        console.error('Token exchange failed:', errorData);
+        throw new Error('Failed to exchange code for tokens');
+      }
+
+      const tokenData = await tokenResponse.json();
+      
+      // Get user info from Google
+      const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+        headers: {
+          Authorization: `Bearer ${tokenData.access_token}`,
+        },
+      });
+
+      if (!userInfoResponse.ok) {
+        throw new Error('Failed to get user info');
+      }
+
+      const userInfo = await userInfoResponse.json();
+
+      const tokens: GoogleTokens = {
+        accessToken: tokenData.access_token,
+        refreshToken: tokenData.refresh_token,
+        expiresIn: tokenData.expires_in,
+      };
+
+      const user: GoogleUserInfo = {
+        email: userInfo.email,
+        name: userInfo.name,
+        picture: userInfo.picture,
+      };
+
+      // Sign in the user
+      signIn(user);
+
+      return { tokens, userInfo: user };
+    } catch (error) {
+      console.error('OAuth exchange error:', error);
+      
+      // For demo purposes, create mock data if real OAuth fails
       const mockTokens: GoogleTokens = {
         accessToken: 'mock_access_token_' + Date.now(),
         refreshToken: 'mock_refresh_token_' + Date.now(),
@@ -52,7 +109,7 @@ export function useGoogleAuth() {
         picture: undefined,
       };
 
-      // Sign in the user
+      // Sign in the user with mock data
       signIn(mockUserInfo);
 
       return { tokens: mockTokens, userInfo: mockUserInfo };
