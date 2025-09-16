@@ -6,7 +6,6 @@ This project consists of an Encore application. Follow the steps below to get th
 
 If this is your first time using Encore, you need to install the CLI that runs the local development environment. Use the appropriate command for your system:
 
-- **macOS:** `brew install encoredev/tap/encore`
 - **Linux:** `curl -L https://encore.dev/install.sh | bash`
 - **Windows:** `iwr https://encore.dev/install.ps1 | iex`
 
