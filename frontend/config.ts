@@ -2,7 +2,7 @@
 export const googleOAuthConfig = {
   // TODO: Replace with your actual Google OAuth client ID from Google Cloud Console
   // Get this from: https://console.cloud.google.com/apis/credentials
-  clientId: "539498540469-mbbemlu02lejd7ra39ade2nlsvhtr3hg.apps.googleusercontent.com",
+  clientId: "775355110412-aeb994a58vgjojivdan6g8rglvn2c0mm.apps.googleusercontent.com",
   
   // Note: Client secret should be stored server-side as a secret, not in frontend
   redirectUri: window.location.origin + "/auth/callback",
